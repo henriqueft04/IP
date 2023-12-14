@@ -1,4 +1,4 @@
-import csv
+import matplotlib.pyplot as plt
 
 def display_menu():
 
@@ -15,12 +15,20 @@ def display_menu():
 
     print(menu)
     while True:
-        choice = input("Escolha uma opção: ").upper()
+        choice = str(input("Escolha uma opção: ")).upper()
         if choice == 'A':
-            filename = input("Introduza o nome do ficheiro: ")
-            dados = carregar_ficheiro(filename)      
+            #filename = str(input("Introduza o nome do ficheiro: "))
+            dados = carregar_ficheiro('./geoq.csv')      
         elif choice == 'B':
+            compostos_indices = {'SiO2':0, 'TiO2':1, 'Fe2O3':2, 'MgO':3}
             composto = input("Introduza o nome do composto: ")
+
+            if composto not in compostos_indices:
+                print("Composto inválido!")
+            else:
+                print("Estatisticas basicas selecionado!")
+                estatisticas_basicas(dados[compostos_indices[composto]], composto)
+           
         elif choice == 'C':
             print("Visualizar gráfico de dispersão")
         elif choice == 'D':
@@ -36,44 +44,42 @@ def display_menu():
             print("Opção inválida. Por favor, tente novamente.")
 
 def carregar_ficheiro(filename):
-    print("Carregar ficheiro %s selecionado!", filename)
+    
+    try:
+        with open(filename, 'r', newline='', encoding='utf-8') as f:
+            print("Successfully opened the file '%s'!" % filename)
 
-    dados = {} # Dicionário que vai guardar a informação do ficheiro
-               # Neste dicionário, a chave são as coordenadas e o valor é uma lista com os valores dos químicos
+            dados = {}  # Dicionário que vai guardar a informação do ficheiro
+                        # Neste dicionário, a chave são as coordenadas e o valor é uma lista com os valores dos químicos
 
-    with open(filename, 'r',newline='', encoding='utf-8') as f:
-        leitor = csv.reader(f)
-        
-        header = next(leitor) # Passar à frente o cabeçalho
+            next(f)  # Skip tao cabeçalho
 
-        for linha in leitor:
-            
-            #tirar as coordenadas
-            coordenadas = float(linha[0],float(linha[1]))
+            for linha in f:
+                linha = linha.strip()  # Remove leading/trailing whitespace and newline characters
+                coordenadas = linha[:2]  # First two characters are coordinates
+                valores = linha[2:]  # The rest of the line are chemical values
+                dados[coordenadas] = valores
 
-            #guardas os químicos até MgO
-            quimicos = [float(linha[i]) for i in range(2,5)]
-
-            #cuidado extra com MgO
-            if float(linha[6]) == -99999:
-                continue
-            else:
-                quimicos.append(float(linha[6]))
-
-            dados[coordenadas] = quimicos
-
-    print('Ficheiro carregado com sucesso!')
+            print(dados)
+    except FileNotFoundError:
+        print('Ficheiro não encontrado!')
+    except Exception as e:
+        print('Um erro ocorreu!:', e)
 
     return dados
 
-def estatisticas_basicas(dados, composto):
-    print("Estatisticas basicas selecionado!")
+def estatisticas_basicas(lista_composto, composto):
 
-    compostos_indices = {'SiO2':0, 'TiO2':1, 'Al2O3':2, 'Fe2O3':3, 'MgO':4}
+    minimo = min(lista_composto)
 
-    # Verificar se o composto existe
-    if composto not in compostos_indices:
-        print("Composto inválido!")
-        return
-    
-    #cal
+    maximo = max(lista_composto)
+
+    media = sum(lista_composto)/len(lista_composto)
+
+    print('Valor mínimo de %s = %.4f%', composto,minimo)
+    print('Valor máximo de %s = %.4f%', composto,maximo)
+    print('Valor médio de %s = %.4f%', composto,media)
+
+
+display_menu()
+   
